@@ -12,7 +12,7 @@
   </head>
 
   <body class="bg-secondary">
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="bg-primary text-white p-3">
       <div class="container d-flex align-items-center">
         <img
@@ -39,10 +39,10 @@
         <div class="collapse navbar-collapse" id="menu">
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
-              <a class="nav-link" href="login.html">Login</a>
+              <a class="nav-link" href="index.html">Login</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="index.html">Beranda</a>
+              <a class="nav-link" href="beranda.html">Beranda</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="transaksi.html">Transaksi</a>
@@ -55,13 +55,11 @@
       </div>
     </nav>
 
-    <!-- form -->
-    <div class="container mb-5">
-      <h4 class="text-center mb-3">Form Transaksi</h4>
-
+    <!-- FORM -->
+    <div class="container my-4">
       <form
         class="card p-4 shadow-lg rounded-4 mb-4"
-        onsubmit="return validasiForm()"
+        onsubmit="return simpanTransaksi()"
       >
         <h5 class="text-center mb-4">Input Transaksi</h5>
 
@@ -90,7 +88,12 @@
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Jumlah</label>
-            <input type="number" id="jumlah" class="form-control" />
+            <input
+              type="number"
+              id="jumlah"
+              class="form-control"
+              oninput="hitungTotal()"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
@@ -106,80 +109,134 @@
 
         <button class="btn btn-success w-100 fw-bold">Simpan Transaksi</button>
       </form>
-    </div>
 
-    <!-- tabel transaksi -->
-    <div class="card shadow rounded-4">
-      <div class="card-body">
-        <h5 class="text-center mb-3">Daftar Transaksi</h5>
+      <!-- TABEL -->
+      <div class="card shadow rounded-4">
+        <div class="card-body">
+          <h5 class="text-center mb-3">Daftar Transaksi</h5>
 
-        <div class="table-responsive">
-          <table
-            class="table table-striped table-hover table-bordered align-middle"
-          >
-            <thead class="table-dark text-center">
-              <tr>
-                <th>Nama</th>
-                <th>Harga</th>
-                <th>Jumlah</th>
-                <th>Total</th>
-                <th>Kategori</th>
-                <th>Tanggal</th>
-              </tr>
-            </thead>
-            <tbody id="tabelTransaksi" class="text-center"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center">
+              <thead class="table-dark">
+                <tr>
+                  <th>Nama</th>
+                  <th>Harga</th>
+                  <th>Jumlah</th>
+                  <th>Total</th>
+                  <th>Kategori</th>
+                  <th>Tanggal</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tabelTransaksi"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- java -->
+    <!-- JAVASCRIPT -->
     <script>
-      // ambil parameter URL
+      // ambil data dari URL
       const params = new URLSearchParams(window.location.search);
-      const namaBarang = params.get("nama");
-      const hargaBarang = params.get("harga");
+      if (params.get("nama")) {
+        document.getElementById("nama").value = params.get("nama");
+      }
+      if (params.get("harga")) {
+        document.getElementById("harga").value = params.get("harga");
+      }
 
-      if (namaBarang) document.getElementById("nama").value = namaBarang;
-      if (hargaBarang) document.getElementById("harga").value = hargaBarang;
+      // format rupiah
+      function formatRupiah(angka) {
+        return "Rp " + Number(angka).toLocaleString("id-ID");
+      }
 
-      // hitung total otomatis
-      document.getElementById("jumlah").addEventListener("input", hitungTotal);
-
+      // hitung total
       function hitungTotal() {
         const harga = document.getElementById("harga").value;
         const jumlah = document.getElementById("jumlah").value;
         document.getElementById("total").value = harga * jumlah;
       }
 
-      // simpan ke tabel
-      function validasiForm() {
-        const nama = document.getElementById("nama").value;
-        const harga = document.getElementById("harga").value;
-        const jumlah = document.getElementById("jumlah").value;
-        const total = document.getElementById("total").value;
-        const kategori = document.getElementById("kategori").value;
-        const tanggal = document.getElementById("tanggal").value;
+      // simpan transaksi
+      function simpanTransaksi() {
+        const nama = namaEl.value;
+        const harga = hargaEl.value;
+        const jumlah = jumlahEl.value;
+        const total = totalEl.value;
+        const kategori = kategoriEl.value;
+        const tanggal = tanggalEl.value;
 
-        if (nama === "" || jumlah === "" || kategori === "" || tanggal === "") {
+        if (!nama || !jumlah || !kategori || !tanggal) {
           alert("Semua field wajib diisi!");
           return false;
         }
 
-        const tabel = document.getElementById("tabelTransaksi");
-        tabel.innerHTML += `
-      <tr>
-        <td>${nama}</td>
-        <td>${harga}</td>
-        <td>${jumlah}</td>
-        <td>${total}</td>
-        <td>${kategori}</td>
-        <td>${tanggal}</td>
-      </tr>
-    `;
+        const data = {
+          nama,
+          harga,
+          jumlah,
+          total,
+          kategori,
+          tanggal,
+        };
 
-        return false; // tidak reload
+        let transaksi = JSON.parse(localStorage.getItem("dataTransaksi")) || [];
+        transaksi.push(data);
+        localStorage.setItem("dataTransaksi", JSON.stringify(transaksi));
+
+        tampilkanTabel();
+        return false;
       }
+
+      // tampilkan tabel
+      function tampilkanTabel() {
+        const tabel = document.getElementById("tabelTransaksi");
+        tabel.innerHTML = "";
+
+        const transaksi =
+          JSON.parse(localStorage.getItem("dataTransaksi")) || [];
+
+        transaksi.forEach((t, i) => {
+          tabel.innerHTML += `
+            <tr>
+              <td>${t.nama}</td>
+              <td>${formatRupiah(t.harga)}</td>
+              <td>${t.jumlah}</td>
+              <td>${formatRupiah(t.total)}</td>
+              <td>${t.kategori}</td>
+              <td>${t.tanggal}</td>
+              <td>
+                <button class="btn btn-danger btn-sm"
+                  onclick="hapusTransaksi(${i})">
+                  Hapus
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // hapus 1 transaksi
+      function hapusTransaksi(index) {
+        if (confirm("Hapus transaksi ini?")) {
+          let transaksi =
+            JSON.parse(localStorage.getItem("dataTransaksi")) || [];
+          transaksi.splice(index, 1);
+          localStorage.setItem("dataTransaksi", JSON.stringify(transaksi));
+          tampilkanTabel();
+        }
+      }
+
+      // load saat halaman dibuka
+      const namaEl = document.getElementById("nama");
+      const hargaEl = document.getElementById("harga");
+      const jumlahEl = document.getElementById("jumlah");
+      const totalEl = document.getElementById("total");
+      const kategoriEl = document.getElementById("kategori");
+      const tanggalEl = document.getElementById("tanggal");
+
+      tampilkanTabel();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
